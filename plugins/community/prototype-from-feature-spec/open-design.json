@@ -1,0 +1,149 @@
+{
+  "$schema": "https://open-design.ai/schemas/plugin.v1.json",
+  "specVersion": "1.0.0",
+  "name": "prototype-from-feature-spec",
+  "title": "Prototype from feature spec",
+  "version": "0.1.0",
+  "description": "Expand a one-line feature brief into a clickable, multi-screen web prototype with real states and real navigation. Launcher index.html plus one HTML file per screen.",
+  "license": "MIT",
+  "author": {
+    "name": "Open Design Community",
+    "url": "https://open-design.ai"
+  },
+  "homepage": "https://github.com/open-design-community/prototype-from-feature-spec",
+  "plugin": {
+    "repo": "https://github.com/open-design-community/prototype-from-feature-spec"
+  },
+  "tags": [
+    "prototype",
+    "interactive",
+    "multi-screen",
+    "web",
+    "feature-spec",
+    "clickable"
+  ],
+  "compat": {
+    "agentSkills": [
+      { "path": "./SKILL.md" }
+    ]
+  },
+  "od": {
+    "kind": "skill",
+    "taskKind": "new-generation",
+    "mode": "prototype",
+    "platform": "responsive",
+    "scenario": "design",
+    "useCase": {
+      "query": {
+        "en": "Build a {{fidelity}} clickable web prototype for this feature: {{featureBrief}}. Audience: {{audience}}. Screens to cover: {{screens}}. Use {{designSystem}} as the design direction. Produce an index.html launcher plus one HTML file per screen with real interactive controls and real states.",
+        "zh-CN": "为下面这个功能构建一个 {{fidelity}} 的可点击 Web 原型：{{featureBrief}}。目标用户：{{audience}}。需要覆盖的屏幕：{{screens}}。设计方向：{{designSystem}}。产出一个 index.html 启动页 + 每个屏幕一个 HTML 文件，每个屏幕都有真实可交互控件和真实状态。"
+      },
+      "exampleOutputs": [
+        { "path": "./examples/clipboard-sharing.md", "title": "Clipboard sharing — example feature spec" }
+      ]
+    },
+    "inputs": [
+      {
+        "name": "featureBrief",
+        "label": "Feature brief",
+        "type": "text",
+        "required": true,
+        "placeholder": "Let teammates share their clipboard history with each other across devices."
+      },
+      {
+        "name": "audience",
+        "label": "Audience",
+        "type": "string",
+        "required": false,
+        "placeholder": "remote engineering teams",
+        "default": "the product's primary users"
+      },
+      {
+        "name": "screens",
+        "label": "Screens to cover",
+        "type": "string",
+        "required": false,
+        "placeholder": "onboarding, home, detail, settings",
+        "default": "onboarding, main work surface, detail, settings"
+      },
+      {
+        "name": "fidelity",
+        "label": "Fidelity",
+        "type": "select",
+        "required": false,
+        "options": ["wireframe", "high-fidelity"],
+        "default": "high-fidelity"
+      },
+      {
+        "name": "designSystem",
+        "label": "Design system",
+        "type": "string",
+        "required": false,
+        "placeholder": "Linear-clone, OpenAI-clone, Vercel-clone, custom brand notes",
+        "default": "the active project design system"
+      }
+    ],
+    "context": {
+      "skills": [
+        { "path": "./SKILL.md" }
+      ],
+      "designSystem": {
+        "primary": false
+      },
+      "assets": [
+        "./examples/clipboard-sharing.md",
+        "./examples/feature-spec-template.md"
+      ],
+      "atoms": [
+        "discovery-question-form",
+        "todo-write",
+        "critique-theater"
+      ]
+    },
+    "pipeline": {
+      "stages": [
+        {
+          "id": "discovery",
+          "atoms": ["discovery-question-form"]
+        },
+        {
+          "id": "plan",
+          "atoms": ["todo-write"]
+        },
+        {
+          "id": "generate",
+          "atoms": ["file-write", "live-artifact"]
+        },
+        {
+          "id": "critique",
+          "atoms": ["critique-theater"],
+          "repeat": true,
+          "until": "critique.score>=4 || iterations>=2"
+        }
+      ]
+    },
+    "genui": {
+      "surfaces": [
+        {
+          "id": "screens-clarify",
+          "kind": "form",
+          "persist": "conversation",
+          "trigger": { "stageId": "discovery", "atom": "discovery-question-form" },
+          "schema": {
+            "type": "object",
+            "required": ["featureBrief"],
+            "properties": {
+              "featureBrief": { "type": "string" },
+              "screens":      { "type": "string" },
+              "audience":     { "type": "string" }
+            }
+          }
+        }
+      ]
+    },
+    "capabilities": [
+      "prompt:inject",
+      "fs:write"
+    ]
+  }
+}
