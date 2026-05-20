@@ -1,0 +1,105 @@
+{
+  "$schema": "https://open-design.ai/schemas/plugin.v1.json",
+  "specVersion": "1.0.0",
+  "name": "pitch-deck-bootstrap",
+  "title": "Pitch Deck Bootstrap",
+  "version": "0.1.0",
+  "description": "Single-shot 6-slide HTML pitch deck from a one-line brief. Cover → Problem → Solution → Traction → Why-now → Ask. Single file, 1920×1080, scale-to-fit, keyboard nav, print-to-PDF.",
+  "license": "MIT",
+  "author": {
+    "name": "lefarcen",
+    "url": "https://github.com/lefarcen"
+  },
+  "homepage": "https://github.com/lefarcen/pitch-deck-bootstrap",
+  "tags": [
+    "deck",
+    "slides",
+    "pitch-deck",
+    "fundraising",
+    "investor",
+    "single-shot",
+    "html",
+    "presentation"
+  ],
+  "compat": {
+    "agentSkills": [
+      { "path": "./SKILL.md" }
+    ]
+  },
+  "od": {
+    "kind": "scenario",
+    "taskKind": "new-generation",
+    "mode": "deck",
+    "scenario": "marketing",
+    "surface": "web",
+    "preview": {
+      "type": "html",
+      "entry": "./examples/sample-deck.html"
+    },
+    "useCase": {
+      "query": {
+        "en": "Create a {{slideCount}}-slide HTML pitch deck for {{audience}} about {{topic}}. Tone: {{tone}}. Use the canonical 1920×1080 deck framework verbatim — fill only the slide content slots. Arc: Cover → Problem → Solution → Traction → Why-now → Ask.",
+        "zh-CN": "为 {{audience}} 制作一份 {{slideCount}} 页 HTML pitch deck，主题：{{topic}}。语气：{{tone}}。直接复用 1920×1080 canonical deck framework，只填 slide 内容。结构：封面 → 问题 → 方案 → Traction → Why now → Ask。"
+      },
+      "exampleOutputs": [
+        { "path": "./examples/sample-deck.html", "title": "Sample 6-slide deck (Lumen — voice AI for support)" }
+      ]
+    },
+    "inputs": [
+      {
+        "name": "topic",
+        "label": "Topic / company",
+        "type": "string",
+        "required": true,
+        "placeholder": "e.g. Lumen — voice AI that resolves 70% of support tickets without a human"
+      },
+      {
+        "name": "audience",
+        "label": "Audience",
+        "type": "string",
+        "required": false,
+        "placeholder": "seed-stage investors",
+        "default": "seed-stage investors"
+      },
+      {
+        "name": "slideCount",
+        "label": "Slide count",
+        "type": "number",
+        "required": false,
+        "default": 6
+      },
+      {
+        "name": "tone",
+        "label": "Tone",
+        "type": "select",
+        "required": false,
+        "options": [
+          "confident-modern",
+          "editorial-restrained",
+          "tech-utility"
+        ],
+        "default": "confident-modern"
+      }
+    ],
+    "context": {
+      "skills": [
+        { "path": "./SKILL.md" }
+      ],
+      "assets": [
+        "./examples/sample-deck.html"
+      ]
+    },
+    "pipeline": {
+      "stages": [
+        {
+          "id": "generate",
+          "atoms": ["file-write", "live-artifact"]
+        }
+      ]
+    },
+    "capabilities": [
+      "prompt:inject",
+      "fs:write"
+    ]
+  }
+}
