@@ -24,18 +24,31 @@
 
     const chrome = document.querySelector('[data-chrome-headroom]');
     if (chrome) {
+      // Headroom: hide the sticky chrome when the user scrolls down,
+      // reveal it on scroll up. Wrapping the read + write in
+      // requestAnimationFrame collapses bursts of scroll events
+      // (browsers fire scroll faster than the display refresh on
+      // trackpads / smooth wheels) into one DOM mutation per frame,
+      // which is what the PageSpeed Insights "forced reflow" entry was
+      // attributing ~700ms to on the previous build.
       let lastY = window.scrollY;
+      let ticking = false;
       const showTopThreshold = 100;
       const scrollDelta = 6;
       window.addEventListener(
         'scroll',
         () => {
-          const y = window.scrollY;
-          const delta = y - lastY;
-          if (y <= showTopThreshold) chrome.classList.remove('is-hidden');
-          else if (delta > scrollDelta) chrome.classList.add('is-hidden');
-          else if (delta < -scrollDelta) chrome.classList.remove('is-hidden');
-          lastY = y;
+          if (ticking) return;
+          ticking = true;
+          requestAnimationFrame(() => {
+            const y = window.scrollY;
+            const delta = y - lastY;
+            if (y <= showTopThreshold) chrome.classList.remove('is-hidden');
+            else if (delta > scrollDelta) chrome.classList.add('is-hidden');
+            else if (delta < -scrollDelta) chrome.classList.remove('is-hidden');
+            lastY = y;
+            ticking = false;
+          });
         },
         { passive: true },
       );
