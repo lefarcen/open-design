@@ -18,8 +18,11 @@
 
 .workspace-shell {
   --workspace-tabs-chrome-height: 44px;
-  width: 100vw;
-  max-width: 100vw;
+  /* Use the parent track width, not viewport units: `100vw` counts the
+     scrollbar gutter on platforms with classic scrollbars and can create a
+     fake horizontal overflow on Home even when the content fits. */
+  width: 100%;
+  max-width: 100%;
   height: 100vh;
   min-width: 0;
   min-height: 0;
