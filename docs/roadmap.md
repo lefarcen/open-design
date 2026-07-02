@@ -14,7 +14,7 @@ Phased plan from "spec-only today" to "usable MVP" to "published v1." All estima
 - [x] `README.md` + `docs/spec.md` + architecture / protocol / adapter / modes / references docs (this repo, as of now)
 - [ ] `docs/schemas/skill-manifest.json` — JSON Schema for the `od:` front-matter block
 - [ ] `docs/schemas/design-system.md` — formal spec of the 9-section `DESIGN.md`
-- [ ] `docs/schemas/protocol.md` — JSON-RPC method signatures
+- [ ] `docs/schemas/protocol.md` — HTTP/SSE API schemas
 - [ ] `docs/schemas/adapter.md` — adapter interface in TypeScript, printed out
 - [ ] `docs/examples/DESIGN.sample.md` — a working example design system
 - [ ] `docs/examples/saas-landing-skill/` — a working example skill (the one sketched in `skills-protocol.md` §8)
@@ -31,12 +31,12 @@ Phased plan from "spec-only today" to "usable MVP" to "published v1." All estima
 ### Scope
 
 **Included:**
-- Web app (Next.js 15, App Router)
+- Web app (Next.js 16, App Router)
   - chat pane · artifact tree · sandboxed iframe preview · export menu
   - skill picker · mode picker · design-system picker
   - **no** comment mode yet · **no** sliders yet · **no** template gallery UI yet
 - Local daemon (Node)
-  - JSON-RPC over WebSocket on `:7431`
+  - HTTP/SSE API on `:7456`
   - agent detection + cached results
   - skill registry (scan three dirs, hot-reload)
   - artifact store (plain files + `history.jsonl`)
@@ -72,23 +72,23 @@ Phased plan from "spec-only today" to "usable MVP" to "published v1." All estima
 
 | Week | Theme | Concrete deliverables |
 |---|---|---|
-| 1 | Scaffolding | monorepo (pnpm workspaces: `apps/web`, `apps/daemon`, `packages/shared`); Next.js 15 base; daemon CLI skeleton; CI green |
-| 2 | Daemon core | JSON-RPC over WS; session manager; skill registry scanning; artifact store (write files + `history.jsonl`); design-system resolver loading `./DESIGN.md` |
+| 1 | Scaffolding | pnpm workspaces (`apps/web`, `apps/daemon`, `e2e`); Next.js 16 base; daemon CLI skeleton; CI green |
+| 2 | Daemon core | HTTP/SSE API; project/conversation store; skill registry scanning; artifact store; design-system resolver loading `DESIGN.md` |
 | 3 | Claude Code adapter | detection (PATH + `~/.claude/` probe); spawn with `--output-format stream-json`; parser from JSON-lines → `AgentEvent`; streaming to daemon's session; cancel via SIGTERM |
 | 4 | API-fallback adapter | Anthropic Messages streaming; minimal tool loop (Read/Write/Edit rooted to artifact cwd); integration with skill prompt injection |
-| 5 | Web UI — chat + artifact tree | Zustand session store; WS client; chat pane; artifact tree reflects filesystem; skill picker |
+| 5 | Web UI — chat + file workspace | React state + daemon-backed project store; SSE client; chat pane; file workspace reflects project files; skill picker |
 | 6 | Web UI — preview + export | sandboxed iframe with hot reload; JSX → vendored React/Babel runtime; export ZIP; export self-contained HTML (inline CSS) |
 | 7 | Default skills | port `guizang-ppt-skill` (no modifications; add `od:` extension block); write `saas-landing` skill; write 1–2 DESIGN.md examples; docs for skill authors |
 | 8 | Polish + dogfood | end-to-end dogfooding; performance pass (daemon <500ms cold start, first generation overhead <50ms); bug-fixing; first publishable alpha |
 
 ### MVP exit criteria
 
-1. `pnpm install && pnpm dev` works on clean macOS and Linux.
+1. `corepack enable && pnpm install && pnpm tools-dev run web` works on clean macOS and Linux with Node 24.
 2. With Claude Code installed: prototype + deck generation works end-to-end.
 3. Without Claude Code installed: API-fallback produces prototypes (not decks — guizang-ppt-skill needs native skill loading).
 4. A user can drop a DESIGN.md into the project root and subsequent generations respect it.
 5. A third party can publish a skill repo; `od skill add <url>` installs it and it works.
-6. Artifacts are plain files; `git add ./.od/artifacts/` and `git log` tell a sensible story.
+6. Artifacts are plain files. This roadmap MUST NOT define daemon data paths; read the root `AGENTS.md` section **Daemon data directory contract** before changing or documenting artifact storage.
 7. No Electron, no Tauri, no desktop packaging anywhere in the repo.
 
 ---
@@ -162,6 +162,47 @@ Phased plan from "spec-only today" to "usable MVP" to "published v1." All estima
 - Hosted SaaS offering (optional; full-local stays primary)
 
 v2 isn't promised. It's the direction if v1 lands.
+
+## Self-evolution track
+
+The newer Automations direction is tracked in
+[`specs/current/automation-self-evolution.md`](../specs/current/automation-self-evolution.md).
+It folds routines, scheduled connector digests, live-artifact refreshes, Orbit,
+memory extraction, skill creation, token compression, and design-system
+extraction into one Automation template model.
+
+Milestones:
+
+| Milestone | Deliverable |
+|---|---|
+| SE0 | Contracts for source packets, automation templates, evolution proposals, memory tree nodes, and compression reports. |
+| SE1 | Editable memory tree that agents actually consume through the daemon and BYOK/API-mode prompt resolver. |
+| SE2 | Automation template registry exposed in both web UI and `od automation`. |
+| SE3 | Design-system extraction and skill crystallization proposals with review gates. |
+| SE4 | Connector-driven ingestion into memory/design-system/skill proposals with provenance. |
+| SE5 | Optional token compression with before/after token reports and rollback-safe stored originals. |
+
+SE1 starts from the existing Markdown memory store: `/api/memory/tree` and
+`od memory tree list/view/edit/move` expose a derived editable tree while the
+same selected entries continue feeding daemon and BYOK/API-mode prompts.
+
+SE2 also includes the first review gate: `/api/automation-proposals` plus
+`od automation proposal list/get/apply/reject` can review memory-node, skill,
+and design-system proposals. Accepted memory proposals write into the memory
+tree; accepted skill and design-system proposals write reviewed drafts under
+the user-owned runtime roots.
+
+SE3/SE4 start closing the source loop through `/api/automation-ingestions`,
+`/api/automation-source-packets`, and `od automation source ingest/list/get`.
+The Automations page now has a source-ingestion panel that can turn pasted
+connector/repo/artifact/chat context into stored source packets plus reviewable
+memory, skill, and design-system proposals. Each ingestion can choose
+off/balanced/aggressive compression and records before/after token counts while
+preserving the original packet.
+
+Exit criteria: a connected or uploaded source can become reviewable memory,
+skill, and design-system proposals; accepted proposals are visible in the tree
+and are consumed by a later agent run without extra prompting.
 
 ---
 
